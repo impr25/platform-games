@@ -5,6 +5,10 @@ use crossterm::{
 };
 use std::io::{stdout, Result};
 
+pub mod rect;
+pub mod animation;
+pub mod bird;
+
 pub struct Game {
     running: bool,
 }
@@ -33,4 +37,5 @@ impl Game {
     pub fn quit(&mut self) {
         self.running = false;
     }
-} 
+}
+
