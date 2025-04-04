@@ -12,7 +12,7 @@ use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
 };
 use std::time::{Duration, Instant};
-use game_lib::{animation::Animation};
+use game_lib::animation::Animation;
 
 fn main() -> io::Result<()> {
     let mut stdout = io::stdout();
@@ -23,7 +23,7 @@ fn main() -> io::Result<()> {
 
     let mut animation = Animation::new(screen_size);
     let mut last_update = Instant::now();
-    let update_interval = Duration::from_millis(50); // Update every 50ms
+    let update_interval = Duration::from_millis(40); // Update every 50ms
 
     while last_update.elapsed() < Duration::from_secs(30) { // Run for 30 seconds
         // Handle input
@@ -31,7 +31,7 @@ fn main() -> io::Result<()> {
             if let Event::Key(key) = event::read()? {
                 if key.kind == KeyEventKind::Press {
                     match key.code {
-                        KeyCode::Char(' ') => animation.jump(), // Space to jump
+                        KeyCode::Char('i') => animation.jump(), // Space to jump
                         KeyCode::Esc => break, // ESC to quit
                         KeyCode::Char('r') => {
                             animation.restart();

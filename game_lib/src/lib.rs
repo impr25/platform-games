@@ -1,41 +1,9 @@
-use crossterm::{
-    cursor::{Hide, Show},
-    terminal::{EnterAlternateScreen, LeaveAlternateScreen},
-    ExecutableCommand,
-};
-use std::io::{stdout, Result};
-
 pub mod rect;
 pub mod animation;
 pub mod bird;
-
-pub struct Game {
-    running: bool,
-}
-
-impl Game {
-    pub fn new() -> Self {
-        Self { running: true }
-    }
-
-    pub fn init_terminal(&self) -> Result<()> {
-        stdout().execute(EnterAlternateScreen)?;
-        stdout().execute(Hide)?;
-        Ok(())
-    }
-
-    pub fn cleanup_terminal(&self) -> Result<()> {
-        stdout().execute(Show)?;
-        stdout().execute(LeaveAlternateScreen)?;
-        Ok(())
-    }
-
-    pub fn is_running(&self) -> bool {
-        self.running
-    }
-
-    pub fn quit(&mut self) {
-        self.running = false;
-    }
-}
-
+pub mod game;
+// Physics constants for Flappy Bird
+pub const GRAVITY: f32 = 1.0;        // Moderate falling speed
+pub const JUMP_VELOCITY: f32 = -3.0; // Quick, snappy jump
+pub const UPDATE_INTERVAL: f32 = 1.0; // 60 FPS
+pub const MAX_VELOCITY: f32 = 8.0;   // Terminal velocity

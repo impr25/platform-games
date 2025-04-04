@@ -1,22 +1,23 @@
 use std::time::{Duration, Instant};
 use crate::{rect::Rect, bird::Bird};
+use crate::game;
 
 pub struct Animation {
     rectangles: Vec<Rect>,
     bird: Bird,
     last_spawn_time: Instant,
-    spawn_interval: Duration,
+    game_level: u16,
     screen_size: (u16, u16),
     game_over: bool,
 }
 
 impl Animation {
-    pub fn new(screen_size: (u16, u16)) -> Self {
+    pub fn new(screen_size: (u16, u16), game_level: u16) -> Self {
         Self {
             rectangles: Vec::new(),
             bird: Bird::new(screen_size),
             last_spawn_time: Instant::now(),
-            spawn_interval: Duration::from_secs(2), // Spawn new rectangle every 2 seconds
+            game_level,
             screen_size,
             game_over: false,
         }
@@ -44,7 +45,7 @@ impl Animation {
         }
 
         // Spawn new rectangle if enough time has passed
-        if self.last_spawn_time.elapsed() >= self.spawn_interval {
+        if self.last_spawn_time.elapsed() >= Duration::from_secs(self.game_level as u64) {
             let max_width = 10;
             // Create new rectangle at the right edge
             let new_rect = Rect::random(max_width, self.screen_size);
@@ -52,6 +53,10 @@ impl Animation {
             self.rectangles.push(new_rect);
             self.last_spawn_time = Instant::now();
         }
+    }
+
+    pub fn update_level(&mut self) {
+        self.game_level = game::get_level();
     }
 
     fn check_collision(&self) -> bool {

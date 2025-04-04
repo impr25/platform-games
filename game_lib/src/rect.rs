@@ -1,7 +1,6 @@
 use rand::Rng;
 use crossterm::style::Color;
 
-// #[derive(Debug, Clone, Copy)]
 pub struct Rect {
     x: u16,
     width: u16,

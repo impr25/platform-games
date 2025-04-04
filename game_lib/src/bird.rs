@@ -1,12 +1,14 @@
 use crossterm::style::Color;
 
-// #[derive(Clone, Copy)]
+use crate::GRAVITY;
+use crate::JUMP_VELOCITY;
+use crate::MAX_VELOCITY;
+use crate::UPDATE_INTERVAL;
+
 pub struct Bird {
     x: u16,
     y: u16,
-    velocity: i16,
-    gravity: i16,
-    jump_force: i16,
+    velocity: f32,
     screen_size: (u16, u16),
 }
 
@@ -15,24 +17,34 @@ impl Bird {
         Self {
             x: 25, // Fixed x position on the left
             y: screen_size.1 / 2, // Start in middle of screen
-            velocity: 0,
-            gravity: 1,
-            jump_force: -3, // Negative because moving up is negative y
+            velocity: 0.0,
             screen_size,
         }
     }
 
     pub fn update(&mut self) {
         // Apply gravity
-        self.velocity += self.gravity;
+        // Clamp velocity to terminal velocity
+        self.velocity = self.velocity.min(MAX_VELOCITY);
         
-        // Update position
-        let new_y = self.y as i16 + self.velocity;
-        self.y = new_y.max(1).min((self.screen_size.1 - 4) as i16) as u16;
+        // Update position using physics equation: y = y0 + v0*t + 0.5*a*t^2
+        let delta_y = self.velocity*UPDATE_INTERVAL + 0.5 * GRAVITY*UPDATE_INTERVAL*UPDATE_INTERVAL;
+        let new_y = self.y as f32 + delta_y;
+        
+        if new_y > (self.screen_size.1 - 4) as f32 {
+            self.velocity = 0.0;
+            self.y = (self.screen_size.1 - 4) as u16;
+        } else if new_y < 1.0 {
+            self.velocity = 0.0;
+            self.y = 1 as u16;
+        } else {
+            self.velocity += GRAVITY;
+            self.y = new_y as u16;
+        }
     }
 
     pub fn jump(&mut self) {
-        self.velocity = self.jump_force;
+        self.velocity = JUMP_VELOCITY;
     }
 
     pub fn draw(&self) -> Vec<(u16, u16, char, Color)> {
