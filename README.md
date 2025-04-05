@@ -55,7 +55,7 @@ fn main() -> std::io::Result<()> {
 To run the included example game:
 
 ```bash
-cargo run --example basic_game
+cargo run -p platform-rs
 ```
 
 Controls:
@@ -78,7 +78,7 @@ This includes both unit tests and integration tests that verify the game mechani
 Generate and view the documentation:
 
 ```bash
-cargo doc --open
+cargo doc --lib --no-deps --open
 ```
 
 ## Project Structure

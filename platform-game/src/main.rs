@@ -6,7 +6,7 @@ use crossterm::{
     terminal::{Clear, ClearType, size},
     event::{self, Event, KeyCode, KeyEventKind},
 };
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use game_lib::animation::Animation;
 use game_lib::game::GameSession;
 
