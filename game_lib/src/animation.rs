@@ -1,6 +1,7 @@
 use std::time::{Duration, Instant};
 use crate::{rect::Rect, bird::Bird};
 use crate::game::GameSession;
+use crate::RECT_INTERVAL;
 
 pub struct Animation {
     rectangles: Vec<Rect>,
@@ -44,7 +45,7 @@ impl Animation {
         }
 
         // Spawn new rectangle if enough time has passed
-        if self.last_spawn_time.elapsed() >= Duration::from_millis(1000) {
+        if self.last_spawn_time.elapsed() >= Duration::from_millis(RECT_INTERVAL) {
             let max_width = 10;
             // Create new rectangle at the right edge
             let new_rect = Rect::random(max_width, self.screen_size);
