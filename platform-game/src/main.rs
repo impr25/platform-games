@@ -1,48 +1,47 @@
 use std::io::{self, Write};
 use crossterm::{
     execute, queue,
-    style::{self, Stylize, Color},
+    style::{self, Stylize},
     cursor,
-    terminal::{
-       EnterAlternateScreen,
-       LeaveAlternateScreen,
-       size,
-       Clear,
-       ClearType},
+    terminal::{Clear, ClearType, size},
     event::{self, Event, KeyCode, KeyEventKind},
 };
 use std::time::{Duration, Instant};
 use game_lib::animation::Animation;
+use game_lib::game::GameSession;
 
 fn main() -> io::Result<()> {
     let mut stdout = io::stdout();
     let screen_size = size().unwrap();
     let (width, height) = screen_size;
 
-    execute!(stdout, EnterAlternateScreen)?;
+    let mut game_session = GameSession::new();
+    game_session.init_terminal()?;
+    game_session.start();
 
     let mut animation = Animation::new(screen_size);
-    let mut last_update = Instant::now();
-    let update_interval = Duration::from_millis(40); // Update every 50ms
+    let mut update_interval = 40;
 
-    while last_update.elapsed() < Duration::from_secs(30) { // Run for 30 seconds
-        // Handle input
+    let mut current_level = game_session.get_level();
+
+    while game_session.is_running() {
         if event::poll(Duration::from_millis(0))? {
             if let Event::Key(key) = event::read()? {
                 if key.kind == KeyEventKind::Press {
                     match key.code {
-                        KeyCode::Char('i') => animation.jump(), // Space to jump
-                        KeyCode::Esc => break, // ESC to quit
+                        KeyCode::Char('i') => animation.jump(),
+                        KeyCode::Esc => break,
                         KeyCode::Char('r') => {
-                            animation.restart();
-                        }
+                            animation.restart(&mut game_session);
+                            update_interval = 40;
+                            current_level = game_session.get_level();
+                        },
                         _ => {}
                     }
                 }
             }
         }
 
-        // Clear the screen
         execute!(stdout, Clear(ClearType::All))?;
 
         // Draw border
@@ -54,10 +53,19 @@ fn main() -> io::Result<()> {
             }
         }
 
-        // Update animation
-        animation.update();
+        // Update animation with game session
+        animation.update(&mut game_session);
 
-        // Draw all rectangles
+        // Draw score and level
+        queue!(
+            stdout,
+            cursor::MoveTo(2, 1),
+            style::PrintStyledContent(format!("Level: {}", game_session.get_level()).green()),
+            cursor::MoveTo(2, 2),
+            style::PrintStyledContent(format!("Score: {}", game_session.get_score()).green()),
+        )?;
+
+        // Draw rectangles
         for rect in animation.get_rectangles() {
             for (x, y, char, color) in rect.draw() {
                 queue!(
@@ -69,8 +77,7 @@ fn main() -> io::Result<()> {
         }
 
         // Draw bird
-        let bird = animation.get_bird();
-        for (x, y, char, color) in bird.draw() {
+        for (x, y, char, color) in animation.get_bird().draw() {
             queue!(
                 stdout,
                 cursor::MoveTo(x, y),
@@ -78,31 +85,33 @@ fn main() -> io::Result<()> {
             )?;
         }
 
-        // Draw game over message if game is over
+        // Draw game over message
         if animation.is_game_over() {
             let game_over_text = "GAME OVER! Press ESC to quit";
             let restart_text = "Press R to restart";
             let text_x = (width - game_over_text.len() as u16) / 2;
             let text_y = height / 2;
+            
             queue!(
                 stdout,
                 cursor::MoveTo(text_x, text_y),
-                style::PrintStyledContent(game_over_text.red())
-            )?;
-            let restart_text_x = (width - restart_text.len() as u16) / 2;
-            let restart_text_y = text_y + 2;
-            queue!(
-                stdout,
-                cursor::MoveTo(restart_text_x, restart_text_y),
+                style::PrintStyledContent(game_over_text.red()),
+                cursor::MoveTo((width - restart_text.len() as u16) / 2, text_y + 2),
                 style::PrintStyledContent(restart_text.green())
             )?;
         }
 
+        let game_level = game_session.get_level();
+        if game_level > current_level {
+            current_level = game_level;
+            update_interval = (update_interval as f32 * 0.9) as u64; // Increase speed by reducing interval
+        }
+
+
         stdout.flush()?;
-        last_update = Instant::now();
-        std::thread::sleep(update_interval);
+        std::thread::sleep(Duration::from_millis(update_interval));
     }
 
-    execute!(stdout, LeaveAlternateScreen)?;
+    game_session.cleanup_terminal()?;
     Ok(())
 }

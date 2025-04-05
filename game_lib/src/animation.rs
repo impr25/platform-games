@@ -1,33 +1,31 @@
 use std::time::{Duration, Instant};
 use crate::{rect::Rect, bird::Bird};
-use crate::game;
+use crate::game::GameSession;
 
 pub struct Animation {
     rectangles: Vec<Rect>,
     bird: Bird,
     last_spawn_time: Instant,
-    game_level: u16,
     screen_size: (u16, u16),
     game_over: bool,
 }
 
 impl Animation {
-    pub fn new(screen_size: (u16, u16), game_level: u16) -> Self {
+    pub fn new(screen_size: (u16, u16)) -> Self {
         Self {
             rectangles: Vec::new(),
             bird: Bird::new(screen_size),
             last_spawn_time: Instant::now(),
-            game_level,
             screen_size,
             game_over: false,
         }
     }
 
-    pub fn update(&mut self) {
-
+    pub fn update(&mut self, game_session: &mut GameSession) {
         if self.game_over {
             return;
         }
+
         // Remove rectangles that have moved off screen
         self.rectangles.retain(|rect| rect.get_x() > 0);
 
@@ -42,21 +40,24 @@ impl Animation {
         // Check for collisions
         if self.check_collision() {
             self.game_over = true;
+            return;
         }
 
         // Spawn new rectangle if enough time has passed
-        if self.last_spawn_time.elapsed() >= Duration::from_secs(self.game_level as u64) {
+        if self.last_spawn_time.elapsed() >= Duration::from_millis(1000) {
             let max_width = 10;
             // Create new rectangle at the right edge
             let new_rect = Rect::random(max_width, self.screen_size);
             
             self.rectangles.push(new_rect);
             self.last_spawn_time = Instant::now();
-        }
-    }
 
-    pub fn update_level(&mut self) {
-        self.game_level = game::get_level();
+            game_session.increase_score();
+
+            if game_session.get_score() % 5 == 0 {
+                game_session.increase_level();
+            }
+        }
     }
 
     fn check_collision(&self) -> bool {
@@ -99,9 +100,10 @@ impl Animation {
         self.game_over
     }
 
-    pub fn restart(&mut self) {
+    pub fn restart(&mut self, game_session: &mut GameSession) {
         self.game_over = false;
         self.rectangles.clear();
         self.last_spawn_time = Instant::now();
+        game_session.start();
     }
-} 
+}

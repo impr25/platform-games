@@ -4,27 +4,26 @@ use crossterm::{
     ExecutableCommand,
 };
 use std::io::{stdout, Result};
-// use std::cell::Cell;
 
-// static LEVEL: Cell<u16> = Cell::new(1);
+pub enum GameStatus {
+    Start,
+    Running,
+    End,
+}
 
-// pub fn increase_level() {
-//     let current_level = LEVEL.get();
-//     LEVEL.set(current_level + 1);
-// }
-
-// pub fn get_level() -> u16 {
-//     LEVEL.get()
-// }
-
-pub struct Game {
-    running: bool,
+pub struct GameSession {
+    status: GameStatus,
+    score: u32,
     level: u16,
 }
 
-impl Game {
+impl GameSession {
     pub fn new() -> Self {
-        Self { running: true, level: 1 }
+        Self { 
+            status: GameStatus::Start, 
+            score: 0, 
+            level: 1
+        } 
     }
 
     pub fn init_terminal(&self) -> Result<()> {
@@ -40,15 +39,29 @@ impl Game {
     }
 
     pub fn is_running(&self) -> bool {
-        self.running
+        matches!(self.status, GameStatus::Running)
     }
 
-    pub fn quit(&mut self) {
-        self.running = false;
+    pub fn start(&mut self) {
+        self.status = GameStatus::Running;
+        self.score = 0;
+        self.level = 1;
+    }
+
+    pub fn end(&mut self) {
+        self.status = GameStatus::End;
     }
 
     pub fn increase_level(&mut self) {
         self.level += 1;
+    }
+
+    pub fn increase_score(&mut self) {
+        self.score += 1;
+    }
+
+    pub fn get_score(&self) -> u32 {
+        self.score
     }
 
     pub fn get_level(&self) -> u16 {
