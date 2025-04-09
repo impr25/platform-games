@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+serialport = "4.7.1"
 game_lib = { path = "../game_lib" }
 crossterm.workspace = true 

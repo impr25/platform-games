@@ -1,4 +1,4 @@
-use std::io::{self, Write};
+use std::io::{self, Write, Read};
 use crossterm::{
     execute, queue,
     style::{self, Stylize},
@@ -10,7 +10,12 @@ use std::time::Duration;
 use game_lib::animation::Animation;
 use game_lib::game::GameSession;
 
-fn main() -> io::Result<()> {
+use serialport::{self};
+
+
+const DEFAULT_PORT: &str = "COM5";
+
+fn main() -> Result<(), serialport::Error> {
     let mut stdout = io::stdout();
     let screen_size = size().unwrap();
     let (width, height) = screen_size;
@@ -22,7 +27,13 @@ fn main() -> io::Result<()> {
     let mut animation = Animation::new(screen_size);
     let mut update_interval = 40;
 
-    let mut current_level = game_session.get_level();
+   let mut current_level = game_session.get_level();
+
+   let mut port = serialport::new(DEFAULT_PORT, 115200)
+        .timeout(Duration::from_millis(10))
+        .open()?;
+
+    let mut buffer: Vec<u8> = vec![0; 1];
 
     while game_session.is_running() {
         if event::poll(Duration::from_millis(0))? {
@@ -40,6 +51,25 @@ fn main() -> io::Result<()> {
                     }
                 }
             }
+        }
+
+        match port.read(buffer.as_mut_slice()) {
+            Ok(t) => {
+                if t > 0 {
+                    let received_char = buffer[0] as char;
+                    match received_char {
+                        'i' => {
+                            animation.jump();
+                        }
+                        'j' => {
+                            animation.jump();
+                        }
+                        _ => {} // Ignore other characters
+                    }
+                }
+            }
+            Err(ref e) if e.kind() == io::ErrorKind::TimedOut => (), // Ignore timeouts
+            Err(e) => eprintln!("Error reading from serial port: {}", e),
         }
 
         execute!(stdout, Clear(ClearType::All))?;
